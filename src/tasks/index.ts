@@ -22,13 +22,19 @@ export class TaskManager {
     this.tasks.set(task.ID, task);
   }
 
-  addDoBefore(task: TaskID, taskToDoBefore: TaskID | TaskID[]) {
+  addBlockingTask(task: TaskID, blockingTaskID: TaskID | TaskID[]) {
     const existingDependencies = this.getDependency(task);
     if (existingDependencies) {
-      existingDependencies.push(...taskToDoBefore);
+      existingDependencies.push(...blockingTaskID);
     } else {
-      this.dependencies.set(task, [...taskToDoBefore]);
+      this.dependencies.set(task, [...blockingTaskID]);
     }
+  }
+
+  removeBlockingTask(taskID: TaskID, blockingTaskID: TaskID) {
+    const blockers = this.getDependency(taskID) ?? [];
+    const newBlockers = blockers.filter((ID) => ID !== blockingTaskID);
+    this.dependencies.set(taskID, newBlockers);
   }
 
   getCanDoTask(taskID: TaskID): boolean {
@@ -41,10 +47,10 @@ export class TaskManager {
   }
 
   getEligibleDependentTasks(taskID: TaskID) {
-    // const task = this.getTaskByID(taskID)
-    // task is eligible if there are no cycles
-    const deps = this.getDependency(taskID) ?? [];
-    return this.getTasks().filter(({ ID }) => ID !== taskID);
+    const blockers = this.getBlockingTaskIDs(taskID);
+    return this.getTasks().filter(
+      ({ ID }) => ID !== taskID && !blockers.includes(taskID),
+    );
   }
 
   setTaskCompletion(taskID: TaskID, isComplete: boolean) {
@@ -71,9 +77,15 @@ export class TaskManager {
     return this.getTaskByID(taskID);
   }
 
-  getDependentTasks(taskID: TaskID): Task[] {
+  getBlockingTasks(taskID: TaskID): Task[] {
+    return (
+      this.getBlockingTaskIDs(taskID).map((ID) => this.getTaskByID(ID)) ?? []
+    );
+  }
+
+  getBlockingTaskIDs(taskID: TaskID): TaskID[] {
     const deps = this.getDependency(taskID);
-    return deps?.map((ID) => this.getTaskByID(ID)) ?? [];
+    return deps ?? [];
   }
 
   private getTaskByID(taskID: TaskID): Task {

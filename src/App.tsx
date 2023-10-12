@@ -171,13 +171,12 @@ const TaskView = ({
               <label>
                 <input
                   type="checkbox"
-                  checked={taskManager
-                    .getDependentTasks(taskID)
-                    .map(({ ID: _id }) => _id)
-                    .includes(ID)}
+                  checked={taskManager.getBlockingTaskIDs(taskID).includes(ID)}
                   onChange={({ target: { checked } }) => {
                     if (checked) {
-                      taskManager.addDoBefore(taskID, ID);
+                      taskManager.addBlockingTask(taskID, ID);
+                    } else {
+                      taskManager.removeBlockingTask(taskID, ID);
                     }
                   }}
                 />
