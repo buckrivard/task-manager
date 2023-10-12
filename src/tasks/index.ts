@@ -1,4 +1,4 @@
-type TaskID = string;
+export type TaskID = string;
 
 export interface Task {
   ID: TaskID;
@@ -9,7 +9,7 @@ export interface Task {
 
 class TaskNotExistError extends Error {}
 
-class TaskManager {
+export class TaskManager {
   private tasks: Map<TaskID, Task>;
   private dependencies: Map<TaskID, TaskID[]>;
 
@@ -38,6 +38,30 @@ class TaskManager {
     });
   }
 
+  setTaskCompletion(taskID: TaskID, isComplete: boolean) {
+    const task = this.getTaskByID(taskID);
+    this.tasks.set(taskID, {
+      ...task,
+      complete: isComplete,
+    });
+  }
+
+  getTasks(filter?: "complete" | "incomplete"): Task[] {
+    const tasks = Array.from(this.tasks.values());
+    switch (filter) {
+      case "complete":
+        return tasks.filter(({ complete }) => complete);
+      case "incomplete":
+        return tasks.filter(({ complete }) => !complete);
+      default:
+        return tasks;
+    }
+  }
+
+  getTask(taskID: TaskID): Task {
+    return this.getTaskByID(taskID);
+  }
+
   private getTaskByID(taskID: TaskID): Task {
     const task = this.tasks.get(taskID);
 
@@ -52,6 +76,13 @@ class TaskManager {
 }
 
 export const taskManager = new TaskManager();
+(window as any).tm = taskManager;
+export const makeTask = (taskConfig: Omit<Task, "ID">): Task => {
+  return {
+    ...taskConfig,
+    ID: crypto.randomUUID(),
+  };
+};
 
 /**
  * EXAMPLE:
