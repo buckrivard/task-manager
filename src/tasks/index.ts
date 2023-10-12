@@ -22,20 +22,29 @@ export class TaskManager {
     this.tasks.set(task.ID, task);
   }
 
-  addDoBefore(task: TaskID, taskToDoBefore: TaskID) {
+  addDoBefore(task: TaskID, taskToDoBefore: TaskID | TaskID[]) {
     const existingDependencies = this.getDependency(task);
     if (existingDependencies) {
-      existingDependencies.push(taskToDoBefore);
+      existingDependencies.push(...taskToDoBefore);
     } else {
-      this.dependencies.set(task, [taskToDoBefore]);
+      this.dependencies.set(task, [...taskToDoBefore]);
     }
   }
 
-  canDoTask(task: Task) {
-    return this.dependencies.get(task.ID)?.every((id) => {
+  getCanDoTask(taskID: TaskID): boolean {
+    const deps = this.getDependency(taskID);
+    if (!deps) return true;
+    return deps.every((id) => {
       const dependentTask = this.getTaskByID(id);
       return dependentTask.complete;
     });
+  }
+
+  getEligibleDependentTasks(taskID: TaskID) {
+    // const task = this.getTaskByID(taskID)
+    // task is eligible if there are no cycles
+    const deps = this.getDependency(taskID) ?? [];
+    return this.getTasks().filter(({ ID }) => ID !== taskID);
   }
 
   setTaskCompletion(taskID: TaskID, isComplete: boolean) {
@@ -62,6 +71,11 @@ export class TaskManager {
     return this.getTaskByID(taskID);
   }
 
+  getDependentTasks(taskID: TaskID): Task[] {
+    const deps = this.getDependency(taskID);
+    return deps?.map((ID) => this.getTaskByID(ID)) ?? [];
+  }
+
   private getTaskByID(taskID: TaskID): Task {
     const task = this.tasks.get(taskID);
 
@@ -75,12 +89,14 @@ export class TaskManager {
   }
 }
 
+let taskID = 0;
+
 export const taskManager = new TaskManager();
 (window as any).tm = taskManager;
 export const makeTask = (taskConfig: Omit<Task, "ID">): Task => {
   return {
     ...taskConfig,
-    ID: crypto.randomUUID(),
+    ID: (taskID++).toString(),
   };
 };
 
