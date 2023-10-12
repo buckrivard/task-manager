@@ -36,12 +36,12 @@ function withIntercept<T extends object>(
 
 function useBindAPIToReact<T extends object>(
   originalObj: T,
-  shouldIntercept: (methodName: keyof T) => boolean,
+  shouldTriggerRerender: (methodName: keyof T) => boolean,
 ): T {
   const updateState = useForceRerender();
   const [api] = useState(
     withIntercept(originalObj, (methodName) => {
-      if (shouldIntercept(methodName)) {
+      if (shouldTriggerRerender(methodName)) {
         updateState();
       }
     }),
