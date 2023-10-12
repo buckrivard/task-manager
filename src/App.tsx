@@ -156,13 +156,37 @@ const TaskView = ({
         Complete?
         <input
           type="checkbox"
+          disabled={!taskManager.getCanDoTask(taskID)}
           checked={task.complete}
           onChange={({ target: { checked } }) =>
             taskManager.setTaskCompletion(taskID, checked)
           }
         />
       </label>
-      <h2>Actions</h2>
+      <h2>Depends On?</h2>
+      <ul>
+        {taskManager.getEligibleDependentTasks(taskID).map(({ name, ID }) => {
+          return (
+            <li key={ID}>
+              <label>
+                <input
+                  type="checkbox"
+                  checked={taskManager
+                    .getDependentTasks(taskID)
+                    .map(({ ID: _id }) => _id)
+                    .includes(ID)}
+                  onChange={({ target: { checked } }) => {
+                    if (checked) {
+                      taskManager.addDoBefore(taskID, ID);
+                    }
+                  }}
+                />
+                {name}
+              </label>
+            </li>
+          );
+        })}
+      </ul>
     </div>
   );
 };
